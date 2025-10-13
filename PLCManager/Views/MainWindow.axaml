@@ -1,0 +1,260 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:PLCManager.ViewModels"
+        x:Class="PLCManager.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="Nodus/IP - PLC Connection Manager"
+        Width="1000" Height="700"
+        Background="#36393F">
+
+    <DockPanel>
+        <!-- Top Toolbar -->
+        <Border DockPanel.Dock="Top" Background="#202225" Padding="10">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <Button Content="➕ New Connection" Command="{Binding AddNewCommand}"
+                        Background="#5865F2" Foreground="White" Padding="15,8"/>
+                <Button Content="💾 Save All" Command="{Binding SaveCommand}"
+                        Background="#3BA55D" Foreground="White" Padding="15,8"/>
+                <Button Content="📂 Load" Click="OnOpenClick"
+                        Background="#FAA81A" Foreground="White" Padding="15,8"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Status Bar -->
+        <Border DockPanel.Dock="Bottom" Background="#5865F2" Padding="10">
+            <TextBlock Text="{Binding StatusMessage}" Foreground="White" FontSize="14"/>
+        </Border>
+
+        <!-- Main Content - Master-Detail Layout -->
+        <Grid ColumnDefinitions="250,*">
+            <!-- Left Sidebar - TreeView with Buildings -->
+            <Border Grid.Column="0" Background="#2F3136" BorderBrush="#202225" BorderThickness="0,0,2,0">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top"
+                              Text="Buildings"
+                              FontSize="16"
+                              FontWeight="Bold"
+                              Foreground="#DCDDDE"
+                              Padding="15,10"
+                              Background="#202225"/>
+
+                    <ScrollViewer>
+                        <ItemsControl ItemsSource="{Binding GroupedConnections}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Expander IsExpanded="True" Margin="0,5,0,0">
+                                        <Expander.Header>
+                                            <TextBlock Text="{Binding BuildingName}"
+                                                      FontSize="13"
+                                                      FontWeight="Bold"
+                                                      Foreground="#FAA81A"
+                                                      VerticalAlignment="Center"/>
+                                        </Expander.Header>
+                                        <Expander.Styles>
+                                            <Style Selector="Expander">
+                                                <Setter Property="Background" Value="#202225"/>
+                                                <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                                            </Style>
+                                            <Style Selector="Expander /template/ ToggleButton">
+                                                <Setter Property="Background" Value="#202225"/>
+                                                <Setter Property="Padding" Value="12,8"/>
+                                            </Style>
+                                            <Style Selector="Expander /template/ ToggleButton:pointerover">
+                                                <Setter Property="Background" Value="#40444B"/>
+                                            </Style>
+                                            <Style Selector="Expander /template/ ContentPresenter#PART_Content">
+                                                <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                                            </Style>
+                                        </Expander.Styles>
+
+                                        <!-- Connections in this building -->
+                                        <ItemsControl ItemsSource="{Binding Connections}" Background="#2F3136" HorizontalAlignment="Stretch">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Button Background="Transparent"
+                                                           BorderThickness="0"
+                                                           HorizontalAlignment="Stretch"
+                                                           HorizontalContentAlignment="Left"
+                                                           Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectConnectionCommand}"
+                                                           CommandParameter="{Binding}"
+                                                           Padding="20,8,5,8">
+                                                        <Button.Styles>
+                                                            <Style Selector="Button:pointerover">
+                                                                <Setter Property="Background" Value="#40444B"/>
+                                                            </Style>
+                                                        </Button.Styles>
+                                                        <StackPanel HorizontalAlignment="Stretch">
+                                                            <TextBlock Text="{Binding Name}"
+                                                                      FontSize="13"
+                                                                      FontWeight="SemiBold"
+                                                                      Foreground="White"/>
+                                                            <TextBlock Text="{Binding PlcIpAddress}"
+                                                                      FontSize="10"
+                                                                      Foreground="#B9BBBE"
+                                                                      Margin="0,2,0,0"/>
+                                                        </StackPanel>
+                                                    </Button>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Expander>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+
+            <!-- Right Panel - Details -->
+            <ScrollViewer Grid.Column="1">
+                <StackPanel Margin="30,20" IsVisible="{Binding SelectedConnection, Converter={x:Static ObjectConverters.IsNotNull}}">
+                    <!-- Header with Name and Action Buttons -->
+                    <Grid Margin="0,0,0,20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel>
+                            <TextBlock Text="Connection Name" Foreground="#B9BBBE" FontSize="12" Margin="0,0,0,3"/>
+                            <TextBox Text="{Binding SelectedConnection.Name}"
+                                    Background="#40444B"
+                                    Foreground="White"
+                                    BorderThickness="0"
+                                    Padding="10,8"
+                                    FontSize="18"
+                                    FontWeight="SemiBold"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Bottom">
+                            <Button Content="⚙️ Set IP"
+                                    Command="{Binding ConnectCommand}"
+                                    CommandParameter="{Binding SelectedConnection}"
+                                    Background="#5865F2"
+                                    Foreground="White"
+                                    Padding="15,8"/>
+                            <Button Content="📡 Ping"
+                                    Command="{Binding PingCommand}"
+                                    CommandParameter="{Binding SelectedConnection}"
+                                    Background="#3BA55D"
+                                    Foreground="White"
+                                    Padding="15,8"/>
+                            <Button Content="➕ Add New"
+                                    Command="{Binding AddToBuildingCommand}"
+                                    CommandParameter="{Binding SelectedConnection.Building}"
+                                    Background="#FAA81A"
+                                    Foreground="White"
+                                    Padding="15,8"/>
+                            <Button Content="🗑️ Delete"
+                                    Command="{Binding DeleteCommand}"
+                                    CommandParameter="{Binding SelectedConnection}"
+                                    Background="#ED4245"
+                                    Foreground="White"
+                                    Padding="15,8"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Connection Details in 2 Columns -->
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" Margin="0,0,0,20">
+                        <!-- Left Column -->
+                        <StackPanel Grid.Column="0" Spacing="15" Margin="0,0,15,0">
+                            <StackPanel>
+                                <TextBlock Text="PLC IP Address" Foreground="#B9BBBE" FontSize="12" Margin="0,0,0,3"/>
+                                <TextBox Text="{Binding SelectedConnection.PlcIpAddress}"
+                                        Background="#40444B"
+                                        Foreground="White"
+                                        BorderThickness="0"
+                                        Padding="10,8"
+                                        FontSize="14"/>
+                            </StackPanel>
+
+                            <StackPanel>
+                                <TextBlock Text="My IP Address" Foreground="#B9BBBE" FontSize="12" Margin="0,0,0,3"/>
+                                <TextBox Text="{Binding SelectedConnection.MyIpAddress}"
+                                        Background="#40444B"
+                                        Foreground="White"
+                                        BorderThickness="0"
+                                        Padding="10,8"
+                                        FontSize="14"/>
+                            </StackPanel>
+
+                            <StackPanel>
+                                <TextBlock Text="Subnet Mask" Foreground="#B9BBBE" FontSize="12" Margin="0,0,0,3"/>
+                                <TextBox Text="{Binding SelectedConnection.SubnetMask}"
+                                        Background="#40444B"
+                                        Foreground="White"
+                                        BorderThickness="0"
+                                        Padding="10,8"
+                                        FontSize="14"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Right Column -->
+                        <StackPanel Grid.Column="1" Spacing="15" Margin="15,0,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Gateway" Foreground="#B9BBBE" FontSize="12" Margin="0,0,0,3"/>
+                                <TextBox Text="{Binding SelectedConnection.Gateway}"
+                                        Background="#40444B"
+                                        Foreground="White"
+                                        BorderThickness="0"
+                                        Padding="10,8"
+                                        FontSize="14"/>
+                            </StackPanel>
+
+                            <StackPanel>
+                                <TextBlock Text="Network Adapter" Foreground="#B9BBBE" FontSize="12" Margin="0,0,0,3"/>
+                                <ComboBox ItemsSource="{Binding AvailableAdapters}"
+                                         SelectedItem="{Binding SelectedConnection.NetworkAdapter}"
+                                         Background="#40444B"
+                                         Foreground="White"
+                                         BorderThickness="0"
+                                         Padding="10,8"
+                                         FontSize="14">
+                                    <ComboBox.Styles>
+                                        <Style Selector="ComboBox:pointerover /template/ Border#Background">
+                                            <Setter Property="Background" Value="#5865F2"/>
+                                        </Style>
+                                    </ComboBox.Styles>
+                                </ComboBox>
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Building and Notes -->
+                    <Grid ColumnDefinitions="250,*" Margin="0,0,0,15">
+                        <StackPanel Grid.Column="0" Margin="0,0,15,0">
+                            <TextBlock Text="Building" Foreground="#B9BBBE" FontSize="12" Margin="0,0,0,3"/>
+                            <ComboBox ItemsSource="{Binding Buildings}"
+                                     SelectedItem="{Binding SelectedConnection.Building}"
+                                     Background="#40444B"
+                                     Foreground="White"
+                                     BorderThickness="0"
+                                     Padding="10,8"
+                                     FontSize="14">
+                                <ComboBox.Styles>
+                                    <Style Selector="ComboBox:pointerover /template/ Border#Background">
+                                        <Setter Property="Background" Value="#5865F2"/>
+                                    </Style>
+                                </ComboBox.Styles>
+                            </ComboBox>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Notes Section -->
+                    <StackPanel>
+                        <TextBlock Text="Notes" Foreground="#B9BBBE" FontSize="12" Margin="0,0,0,3"/>
+                        <TextBox Text="{Binding SelectedConnection.Notes}"
+                                Background="#40444B"
+                                Foreground="White"
+                                BorderThickness="0"
+                                Padding="10,8"
+                                FontSize="14"
+                                AcceptsReturn="True"
+                                TextWrapping="Wrap"
+                                Height="100"/>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </DockPanel>
+</Window>

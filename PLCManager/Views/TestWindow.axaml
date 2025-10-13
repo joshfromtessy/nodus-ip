@@ -1,0 +1,25 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="PLCManager.Views.TestWindow"
+        Title="Test Window"
+        Width="800" Height="400"
+        Background="White">
+
+    <StackPanel Margin="20">
+        <TextBlock Text="THIS IS A TEST - CAN YOU SEE THIS?"
+                  FontSize="24"
+                  Foreground="Red"
+                  FontWeight="Bold"
+                  Margin="10"/>
+
+        <TextBlock Text="If you can see this red text, the app is working"
+                  FontSize="16"
+                  Foreground="Blue"
+                  Margin="10"/>
+
+        <Button Content="CLICK ME"
+               FontSize="20"
+               Padding="20"
+               Margin="10"/>
+    </StackPanel>
+</Window>
