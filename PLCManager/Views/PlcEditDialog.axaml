@@ -1,0 +1,189 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:PLCManager.ViewModels"
+        x:Class="PLCManager.Views.PlcEditDialog"
+        Title="PLC Details"
+        Width="520"
+        Height="550"
+        WindowStartupLocation="CenterOwner"
+        Background="#36393F"
+        CanResize="False"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome"
+        ExtendClientAreaTitleBarHeightHint="35">
+
+    <DockPanel>
+        <!-- Custom Title Bar -->
+        <Border DockPanel.Dock="Top" Background="#5865F2" Height="35">
+            <Grid Margin="5,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                          Text="PLC Connection Details"
+                          FontSize="14"
+                          FontWeight="Bold"
+                          Foreground="White"
+                          VerticalAlignment="Center"
+                          HorizontalAlignment="Center"
+                          IsHitTestVisible="False"/>
+
+                <Button Grid.Column="1"
+                        Content="✕"
+                        Click="OnCancel"
+                        Background="Transparent"
+                        Foreground="White"
+                        BorderThickness="0"
+                        Width="40"
+                        Height="35"
+                        FontSize="16"
+                        VerticalContentAlignment="Center"
+                        HorizontalContentAlignment="Center">
+                    <Button.Styles>
+                        <Style Selector="Button:pointerover">
+                            <Setter Property="Background" Value="#ED4245"/>
+                        </Style>
+                    </Button.Styles>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- Buttons -->
+        <Border DockPanel.Dock="Bottom" Background="#2F3136" Padding="15">
+            <StackPanel>
+                <TextBlock Name="ErrorTextBlock"
+                          Text=""
+                          Foreground="#ED4245"
+                          FontSize="12"
+                          Margin="0,0,0,10"
+                          TextWrapping="Wrap"
+                          IsVisible="False"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+                    <Button Content="Cancel"
+                            Click="OnCancel"
+                            Background="#4F545C"
+                            Foreground="White"
+                            Padding="20,8"
+                            Width="100"/>
+                    <Button Content="Save"
+                            Click="OnSave"
+                            Background="#5865F2"
+                            Foreground="White"
+                            Padding="20,8"
+                            Width="100"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Form Fields -->
+        <ScrollViewer>
+            <StackPanel Margin="20" Spacing="15">
+                <!-- Name -->
+                <StackPanel>
+                    <TextBlock Text="Connection Name *" Foreground="#B9BBBE" FontSize="12" Margin="0,0,0,5"/>
+                    <TextBox Name="NameTextBox"
+                            Background="#40444B"
+                            Foreground="White"
+                            BorderThickness="0"
+                            Padding="10"
+                            FontSize="14"/>
+                </StackPanel>
+
+                <!-- Building -->
+                <StackPanel>
+                    <TextBlock Text="Building *" Foreground="#B9BBBE" FontSize="12" Margin="0,0,0,5"/>
+                    <ComboBox Name="BuildingComboBox"
+                             Background="#40444B"
+                             Foreground="White"
+                             BorderThickness="0"
+                             Padding="10"
+                             FontSize="14">
+                        <ComboBox.Items>
+                            <ComboBoxItem Content="West"/>
+                            <ComboBoxItem Content="East"/>
+                            <ComboBoxItem Content="South"/>
+                            <ComboBoxItem Content="North"/>
+                            <ComboBoxItem Content="Skaneateles"/>
+                            <ComboBoxItem Content="Auburn"/>
+                        </ComboBox.Items>
+                    </ComboBox>
+                </StackPanel>
+
+                <!-- PLC IP -->
+                <StackPanel>
+                    <TextBlock Text="PLC IP Address *" Foreground="#B9BBBE" FontSize="12" Margin="0,0,0,5"/>
+                    <TextBox Name="PlcIpTextBox"
+                            Background="#40444B"
+                            Foreground="White"
+                            BorderThickness="0"
+                            Padding="10"
+                            FontSize="14"
+                            Watermark="192.168.1.100"/>
+                </StackPanel>
+
+                <!-- My IP -->
+                <StackPanel>
+                    <TextBlock Text="My IP Address *" Foreground="#B9BBBE" FontSize="12" Margin="0,0,0,5"/>
+                    <TextBox Name="MyIpTextBox"
+                            Background="#40444B"
+                            Foreground="White"
+                            BorderThickness="0"
+                            Padding="10"
+                            FontSize="14"
+                            Watermark="192.168.1.10"/>
+                </StackPanel>
+
+                <!-- Subnet Mask -->
+                <StackPanel>
+                    <TextBlock Text="Subnet Mask *" Foreground="#B9BBBE" FontSize="12" Margin="0,0,0,5"/>
+                    <TextBox Name="SubnetMaskTextBox"
+                            Background="#40444B"
+                            Foreground="White"
+                            BorderThickness="0"
+                            Padding="10"
+                            FontSize="14"
+                            Text="255.255.255.0"/>
+                </StackPanel>
+
+                <!-- Gateway -->
+                <StackPanel>
+                    <TextBlock Text="Gateway" Foreground="#B9BBBE" FontSize="12" Margin="0,0,0,5"/>
+                    <TextBox Name="GatewayTextBox"
+                            Background="#40444B"
+                            Foreground="White"
+                            BorderThickness="0"
+                            Padding="10"
+                            FontSize="14"
+                            Watermark="192.168.1.1"/>
+                </StackPanel>
+
+                <!-- Network Adapter -->
+                <StackPanel>
+                    <TextBlock Text="Network Adapter *" Foreground="#B9BBBE" FontSize="12" Margin="0,0,0,5"/>
+                    <ComboBox Name="AdapterComboBox"
+                             Background="#40444B"
+                             Foreground="White"
+                             BorderThickness="0"
+                             Padding="10"
+                             FontSize="14"/>
+                </StackPanel>
+
+                <!-- Notes -->
+                <StackPanel>
+                    <TextBlock Text="Notes" Foreground="#B9BBBE" FontSize="12" Margin="0,0,0,5"/>
+                    <TextBox Name="NotesTextBox"
+                            Background="#40444B"
+                            Foreground="White"
+                            BorderThickness="0"
+                            Padding="10"
+                            FontSize="14"
+                            AcceptsReturn="True"
+                            TextWrapping="Wrap"
+                            Height="80"/>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</Window>

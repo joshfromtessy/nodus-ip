@@ -15,31 +15,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly NetworkService _networkService;
     private readonly DataService _dataService;
 
-    public ObservableCollection<PlcConnection> Connections { get; } = new ObservableCollection<PlcConnection>
-    {
-        new PlcConnection
-        {
-            Name = "Sample PLC",
-            PlcIpAddress = "192.168.1.100",
-            MyIpAddress = "192.168.1.50",
-            SubnetMask = "255.255.255.0",
-            Gateway = "192.168.1.1",
-            NetworkAdapter = "Ethernet",
-            Status = "Not connected",
-            Notes = "This is a sample connection"
-        },
-        new PlcConnection
-        {
-            Name = "Test PLC 2",
-            PlcIpAddress = "10.0.0.50",
-            MyIpAddress = "10.0.0.100",
-            SubnetMask = "255.255.255.0",
-            Gateway = "10.0.0.1",
-            NetworkAdapter = "WiFi",
-            Status = "Online",
-            Notes = "Second test"
-        }
-    };
+    public ObservableCollection<PlcConnection> Connections { get; } = new ObservableCollection<PlcConnection>();
 
     [ObservableProperty]
     private PlcConnection? _selectedConnection;
@@ -53,6 +29,9 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private ObservableCollection<string> _availableAdapters = new ObservableCollection<string>();
 
+    [ObservableProperty]
+    private string _searchText = string.Empty;
+
     public ObservableCollection<string> Buildings { get; } = new ObservableCollection<string>
     {
         "West",
@@ -63,6 +42,11 @@ public partial class MainWindowViewModel : ViewModelBase
         "Auburn"
     };
 
+    partial void OnSearchTextChanged(string value)
+    {
+        OnPropertyChanged(nameof(GroupedConnections));
+    }
+
     public ObservableCollection<BuildingGroup> GroupedConnections
     {
         get
@@ -70,7 +54,12 @@ public partial class MainWindowViewModel : ViewModelBase
             var groups = new ObservableCollection<BuildingGroup>();
             foreach (var building in Buildings)
             {
-                var connectionsInBuilding = Connections.Where(c => c.Building == building).ToList();
+                var connectionsInBuilding = Connections
+                    .Where(c => c.Building == building)
+                    .Where(c => string.IsNullOrWhiteSpace(SearchText) ||
+                               c.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
                 if (connectionsInBuilding.Any())
                 {
                     groups.Add(new BuildingGroup
@@ -91,8 +80,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
         LoadAvailableAdapters();
 
-        // DON'T load connections on startup - it clears the sample data
-        // _ = LoadConnectionsAsync();
+        // Don't auto-load - user can use 📂 button to load
+        StatusMessage = "Ready - Use 📂 to load connections or + to add new ones";
     }
 
     private void LoadAvailableAdapters()
@@ -117,16 +106,8 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void AddNew()
     {
-        var newConnection = new PlcConnection
-        {
-            Name = "New PLC",
-            NetworkAdapter = AvailableAdapters.FirstOrDefault() ?? string.Empty,
-            Status = "Not connected",
-            Building = "West"
-        };
-        Connections.Add(newConnection);
-        SelectedConnection = newConnection;
-        StatusMessage = "New connection added";
+        // This will be handled by the view - it will open the dialog
+        StatusMessage = "Add new PLC connection...";
     }
 
     [RelayCommand]
@@ -154,8 +135,8 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             var name = connection.Name;
             Connections.Remove(connection);
-            StatusMessage = $"Deleted '{name}'";
-            _ = SaveConnectionsAsync();
+            OnPropertyChanged(nameof(GroupedConnections));
+            StatusMessage = $"Deleted '{name}' - Click 💾 to save changes";
         }
     }
 
@@ -198,7 +179,6 @@ public partial class MainWindowViewModel : ViewModelBase
                 connection.Status = "Connected";
                 connection.LastConnected = DateTime.Now;
                 StatusMessage = $"Connected to {connection.Name} - IP changed successfully";
-                await SaveConnectionsAsync();
             }
             else
             {
@@ -311,7 +291,8 @@ public partial class MainWindowViewModel : ViewModelBase
             {
                 Connections.Add(connection);
             }
-            StatusMessage = filePath != null ? $"Loaded from {filePath}" : "Loaded successfully";
+            OnPropertyChanged(nameof(GroupedConnections));
+            StatusMessage = filePath != null ? $"Loaded from {filePath}" : "Ready";
         }
         catch (Exception ex)
         {
