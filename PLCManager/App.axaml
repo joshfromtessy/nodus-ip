@@ -11,5 +11,36 @@
   
     <Application.Styles>
         <FluentTheme />
+
+        <!-- Global TextBox Styles -->
+        <Style Selector="TextBox">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="CaretBrush" Value="White"/>
+            <Setter Property="SelectionBrush" Value="#5865F2"/>
+            <Setter Property="SelectionForegroundBrush" Value="White"/>
+        </Style>
+        <Style Selector="TextBox:focus /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="#40444B"/>
+            <Setter Property="BorderBrush" Value="#5865F2"/>
+            <Setter Property="BorderThickness" Value="2"/>
+        </Style>
+        <Style Selector="TextBox:pointerover /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="#40444B"/>
+            <Setter Property="BorderBrush" Value="#5865F2"/>
+        </Style>
+
+        <!-- Global ComboBox Styles -->
+        <Style Selector="ComboBox">
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        <Style Selector="ComboBox:focus /template/ Border#Background">
+            <Setter Property="Background" Value="#40444B"/>
+            <Setter Property="BorderBrush" Value="#5865F2"/>
+            <Setter Property="BorderThickness" Value="2"/>
+        </Style>
+        <Style Selector="ComboBox:pointerover /template/ Border#Background">
+            <Setter Property="Background" Value="#40444B"/>
+            <Setter Property="BorderBrush" Value="#5865F2"/>
+        </Style>
     </Application.Styles>
 </Application>

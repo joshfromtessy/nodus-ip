@@ -4,6 +4,7 @@ using PLCManager.Models;
 using PLCManager.Services;
 using System;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Platform.Storage;
@@ -14,6 +15,7 @@ public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly NetworkService _networkService;
     private readonly DataService _dataService;
+    private readonly UpdateService _updateService;
 
     public ObservableCollection<PlcConnection> Connections { get; } = new ObservableCollection<PlcConnection>();
 
@@ -25,6 +27,15 @@ public partial class MainWindowViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _isLoading;
+
+    [ObservableProperty]
+    private bool _updateAvailable;
+
+    [ObservableProperty]
+    private string _latestVersion = string.Empty;
+
+    [ObservableProperty]
+    private string _updateUrl = string.Empty;
 
     [ObservableProperty]
     private ObservableCollection<string> _availableAdapters = new ObservableCollection<string>();
@@ -77,11 +88,75 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         _networkService = new NetworkService();
         _dataService = new DataService();
+        _updateService = new UpdateService();
 
         LoadAvailableAdapters();
 
-        // Don't auto-load - user can use 📂 button to load
-        StatusMessage = "Ready - Use 📂 to load connections or + to add new ones";
+        // Auto-load from default location
+        _ = InitializeAsync();
+    }
+
+    private async Task InitializeAsync()
+    {
+        try
+        {
+            var connections = await _dataService.LoadConnectionsAsync();
+            foreach (var connection in connections)
+            {
+                Connections.Add(connection);
+            }
+            OnPropertyChanged(nameof(GroupedConnections));
+            StatusMessage = connections.Count > 0
+                ? $"Loaded {connections.Count} connection(s)"
+                : "Ready - Click + to add new connections";
+
+            // Check for updates after loading
+            await CheckForUpdatesAsync();
+        }
+        catch
+        {
+            StatusMessage = "Ready - Click + to add new connections";
+        }
+    }
+
+    private async Task CheckForUpdatesAsync()
+    {
+        try
+        {
+            var (updateAvailable, latestVersion, downloadUrl) = await _updateService.CheckForUpdatesAsync();
+
+            if (updateAvailable)
+            {
+                UpdateAvailable = true;
+                LatestVersion = latestVersion;
+                UpdateUrl = downloadUrl;
+                StatusMessage = $"Update available: v{latestVersion} - Click 🔄 to download";
+            }
+        }
+        catch
+        {
+            // Silently fail - don't bother user if update check fails
+        }
+    }
+
+    [RelayCommand]
+    private void OpenUpdateUrl()
+    {
+        if (!string.IsNullOrEmpty(UpdateUrl))
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = UpdateUrl,
+                    UseShellExecute = true
+                });
+            }
+            catch
+            {
+                StatusMessage = "Failed to open browser";
+            }
+        }
     }
 
     private void LoadAvailableAdapters()
@@ -129,14 +204,29 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void Delete(PlcConnection? connection)
+    private async Task Delete(PlcConnection? connection)
     {
         if (connection != null)
         {
             var name = connection.Name;
             Connections.Remove(connection);
             OnPropertyChanged(nameof(GroupedConnections));
-            StatusMessage = $"Deleted '{name}' - Click 💾 to save changes";
+
+            // Auto-save after delete
+            await AutoSaveAsync();
+            StatusMessage = $"Deleted '{name}'";
+        }
+    }
+
+    private async Task AutoSaveAsync()
+    {
+        try
+        {
+            await _dataService.SaveConnectionsAsync(Connections);
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Auto-save failed: {ex.Message}";
         }
     }
 
@@ -150,7 +240,7 @@ public partial class MainWindowViewModel : ViewModelBase
         }
 
         IsLoading = true;
-        StatusMessage = $"Connecting to {connection.Name}...";
+        StatusMessage = $"Setting local IP for {connection.Name}...";
 
         try
         {
@@ -178,7 +268,7 @@ public partial class MainWindowViewModel : ViewModelBase
             {
                 connection.Status = "Connected";
                 connection.LastConnected = DateTime.Now;
-                StatusMessage = $"Connected to {connection.Name} - IP changed successfully";
+                StatusMessage = $"Local IP set successfully for {connection.Name}";
             }
             else
             {
@@ -268,7 +358,11 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             IsLoading = true;
             await _dataService.SaveConnectionsAsync(Connections, filePath);
-            StatusMessage = filePath != null ? $"Saved to {filePath}" : "Saved successfully";
+            if (filePath != null)
+            {
+                StatusMessage = $"Exported to {Path.GetFileName(filePath)}";
+            }
+            // Don't show message for auto-saves (when filePath is null)
         }
         catch (Exception ex)
         {
@@ -292,7 +386,13 @@ public partial class MainWindowViewModel : ViewModelBase
                 Connections.Add(connection);
             }
             OnPropertyChanged(nameof(GroupedConnections));
-            StatusMessage = filePath != null ? $"Loaded from {filePath}" : "Ready";
+
+            if (filePath != null)
+            {
+                // Manual load - auto-save the imported connections
+                await AutoSaveAsync();
+                StatusMessage = $"Imported {connections.Count} connection(s) from {Path.GetFileName(filePath)}";
+            }
         }
         catch (Exception ex)
         {

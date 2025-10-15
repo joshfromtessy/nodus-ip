@@ -14,39 +14,58 @@
 
     <DockPanel>
         <!-- Custom Title Bar -->
-        <Border DockPanel.Dock="Top" Background="#5865F2" Height="35">
-            <Grid Margin="5,0">
+        <Border DockPanel.Dock="Top" Background="#5865F2" Height="35" PointerPressed="OnTitleBarPointerPressed">
+            <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="80"/>
                 </Grid.ColumnDefinitions>
 
                 <TextBlock Grid.Column="0"
-                          Text="PLC Connection Details"
+                          Name="TitleTextBlock"
+                          Text="Add Connection"
                           FontSize="14"
                           FontWeight="Bold"
                           Foreground="White"
                           VerticalAlignment="Center"
-                          HorizontalAlignment="Center"
-                          IsHitTestVisible="False"/>
+                          HorizontalAlignment="Left"
+                          Margin="12,0,0,0"/>
 
-                <Button Grid.Column="1"
-                        Content="✕"
-                        Click="OnCancel"
-                        Background="Transparent"
-                        Foreground="White"
-                        BorderThickness="0"
-                        Width="40"
-                        Height="35"
-                        FontSize="16"
-                        VerticalContentAlignment="Center"
-                        HorizontalContentAlignment="Center">
-                    <Button.Styles>
-                        <Style Selector="Button:pointerover">
-                            <Setter Property="Background" Value="#ED4245"/>
-                        </Style>
-                    </Button.Styles>
-                </Button>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="0">
+                    <Button Content="—"
+                            Click="OnMinimizeClick"
+                            Background="Transparent"
+                            Foreground="White"
+                            BorderThickness="0"
+                            Width="40"
+                            Height="35"
+                            FontSize="16"
+                            Padding="0,-5,0,0"
+                            VerticalContentAlignment="Center"
+                            HorizontalContentAlignment="Center">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="#4752C4"/>
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+                    <Button Content="✕"
+                            Click="OnCancel"
+                            Background="Transparent"
+                            Foreground="White"
+                            BorderThickness="0"
+                            Width="40"
+                            Height="35"
+                            FontSize="16"
+                            VerticalContentAlignment="Center"
+                            HorizontalContentAlignment="Center">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="#ED4245"/>
+                            </Style>
+                        </Button.Styles>
+                    </Button>
+                </StackPanel>
             </Grid>
         </Border>
 
@@ -100,6 +119,18 @@
                              BorderThickness="0"
                              Padding="10"
                              FontSize="14">
+                        <ComboBox.Styles>
+                            <Style Selector="ComboBoxItem">
+                                <Setter Property="Background" Value="#40444B"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Style>
+                            <Style Selector="ComboBoxItem:pointerover /template/ ContentPresenter">
+                                <Setter Property="Background" Value="#5865F2"/>
+                            </Style>
+                            <Style Selector="ComboBoxItem:selected /template/ ContentPresenter">
+                                <Setter Property="Background" Value="#5865F2"/>
+                            </Style>
+                        </ComboBox.Styles>
                         <ComboBox.Items>
                             <ComboBoxItem Content="West"/>
                             <ComboBoxItem Content="East"/>
@@ -161,13 +192,60 @@
 
                 <!-- Network Adapter -->
                 <StackPanel>
-                    <TextBlock Text="Network Adapter *" Foreground="#B9BBBE" FontSize="12" Margin="0,0,0,5"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Network Adapter *" Foreground="#B9BBBE" FontSize="12" Margin="0,0,0,5"/>
+                        <Button Grid.Column="1"
+                                Content="🔄 Refresh"
+                                Click="OnRefreshAdapters"
+                                Background="#40444B"
+                                Foreground="White"
+                                Padding="8,4"
+                                FontSize="11"
+                                Margin="0,0,0,5">
+                            <Button.Styles>
+                                <Style Selector="Button:pointerover">
+                                    <Setter Property="Background" Value="#5865F2"/>
+                                </Style>
+                            </Button.Styles>
+                        </Button>
+                    </Grid>
                     <ComboBox Name="AdapterComboBox"
                              Background="#40444B"
                              Foreground="White"
                              BorderThickness="0"
                              Padding="10"
-                             FontSize="14"/>
+                             FontSize="14">
+                        <ComboBox.Styles>
+                            <Style Selector="ComboBoxItem">
+                                <Setter Property="Background" Value="#40444B"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Style>
+                            <Style Selector="ComboBoxItem:pointerover /template/ ContentPresenter">
+                                <Setter Property="Background" Value="#5865F2"/>
+                            </Style>
+                            <Style Selector="ComboBoxItem:selected /template/ ContentPresenter">
+                                <Setter Property="Background" Value="#5865F2"/>
+                            </Style>
+                        </ComboBox.Styles>
+                    </ComboBox>
+                    <CheckBox Name="ShowInactiveCheckBox"
+                              Content="Show inactive adapters"
+                              Foreground="#B9BBBE"
+                              FontSize="11"
+                              Margin="0,8,0,0"
+                              Checked="OnShowInactiveChanged"
+                              Unchecked="OnShowInactiveChanged">
+                        <CheckBox.Styles>
+                            <Style Selector="CheckBox:checked /template/ Border#NormalRectangle">
+                                <Setter Property="Background" Value="#5865F2"/>
+                                <Setter Property="BorderBrush" Value="#5865F2"/>
+                            </Style>
+                        </CheckBox.Styles>
+                    </CheckBox>
                 </StackPanel>
 
                 <!-- Notes -->

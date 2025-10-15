@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet run:*)",
+      "Bash(dotnet clean:*)",
+      "Bash(timeout 5 dotnet run --project PLCManager.csproj)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

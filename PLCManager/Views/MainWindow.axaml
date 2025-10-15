@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:PLCManager.ViewModels"
+        xmlns:converters="using:PLCManager.Converters"
         x:Class="PLCManager.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="Nodus/IP"
@@ -11,6 +12,10 @@
         ExtendClientAreaToDecorationsHint="True"
         ExtendClientAreaChromeHints="NoChrome"
         ExtendClientAreaTitleBarHeightHint="35">
+
+    <Window.Resources>
+        <converters:IsEqualConverter x:Key="IsEqualConverter"/>
+    </Window.Resources>
 
     <DockPanel>
         <!-- Custom Title Bar -->
@@ -82,6 +87,20 @@
         <!-- Top Toolbar with Action Buttons -->
         <Border DockPanel.Dock="Top" Background="#202225" Padding="10,8,10,10">
             <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                <Button Content="🔄"
+                        Command="{Binding OpenUpdateUrlCommand}"
+                        Background="#FAA81A"
+                        Foreground="White"
+                        Padding="10,6"
+                        FontSize="16"
+                        ToolTip.Tip="Update available - click to download"
+                        IsVisible="{Binding UpdateAvailable}">
+                    <Button.Styles>
+                        <Style Selector="Button:pointerover">
+                            <Setter Property="Background" Value="#E09615"/>
+                        </Style>
+                    </Button.Styles>
+                </Button>
                 <Button Content="+"
                         Click="OnAddNewClick"
                         Background="#40444B"
@@ -172,8 +191,23 @@
         </Border>
 
         <!-- Status Bar -->
-        <Border DockPanel.Dock="Bottom" Background="#5865F2" Padding="8">
-            <TextBlock Text="{Binding StatusMessage}" Foreground="White" FontSize="12"/>
+        <Border DockPanel.Dock="Bottom" Padding="8">
+            <Border.Background>
+                <SolidColorBrush Color="{Binding UpdateAvailable, Converter={x:Static ObjectConverters.IsNotNull}, FallbackValue=#5865F2}"/>
+            </Border.Background>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="{Binding StatusMessage}" Foreground="White" FontSize="12"/>
+                <TextBlock Grid.Column="1"
+                          Text="{Binding UpdateAvailable, Converter={x:Static ObjectConverters.IsNotNull}, FallbackValue=''}"
+                          Foreground="White"
+                          FontSize="10"
+                          VerticalAlignment="Center"
+                          IsVisible="False"/>
+            </Grid>
         </Border>
 
         <!-- Sidebar with Collapsible Buildings -->
@@ -215,32 +249,61 @@
                                                 <Border.Background>
                                                     <SolidColorBrush Color="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectedConnection, Converter={x:Static ObjectConverters.IsNotNull}, FallbackValue=#2F3136}"/>
                                                 </Border.Background>
-                                                <Button Name="ItemButton"
-                                                       Background="Transparent"
-                                                       BorderThickness="0"
-                                                       HorizontalAlignment="Stretch"
-                                                       HorizontalContentAlignment="Left"
-                                                       Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectConnectionCommand}"
-                                                       CommandParameter="{Binding}"
-                                                       Padding="20,10,5,10"
-                                                       DoubleTapped="OnConnectionDoubleClick"
-                                                       Loaded="OnItemLoaded">
-                                                    <Button.Styles>
-                                                        <Style Selector="Button:pointerover">
-                                                            <Setter Property="Background" Value="#40444B"/>
-                                                        </Style>
-                                                    </Button.Styles>
-                                                    <StackPanel HorizontalAlignment="Stretch">
-                                                        <TextBlock Text="{Binding Name}"
-                                                                  FontSize="13"
-                                                                  FontWeight="SemiBold"
-                                                                  Foreground="White"/>
-                                                        <TextBlock Text="{Binding PlcIpAddress}"
-                                                                  FontSize="10"
-                                                                  Foreground="#B9BBBE"
-                                                                  Margin="0,3,0,0"/>
-                                                    </StackPanel>
-                                                </Button>
+                                                <Grid HorizontalAlignment="Stretch">
+                                                    <Button Name="ItemButton"
+                                                           Background="Transparent"
+                                                           BorderThickness="0"
+                                                           HorizontalAlignment="Stretch"
+                                                           HorizontalContentAlignment="Left"
+                                                           Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).SelectConnectionCommand}"
+                                                           CommandParameter="{Binding}"
+                                                           Padding="20,10,50,10"
+                                                           DoubleTapped="OnConnectionDoubleClick"
+                                                           Loaded="OnItemLoaded">
+                                                        <Button.Styles>
+                                                            <Style Selector="Button:pointerover">
+                                                                <Setter Property="Background" Value="#40444B"/>
+                                                            </Style>
+                                                        </Button.Styles>
+                                                        <StackPanel HorizontalAlignment="Stretch">
+                                                            <TextBlock Text="{Binding Name}"
+                                                                      FontSize="13"
+                                                                      FontWeight="SemiBold"
+                                                                      Foreground="White"/>
+                                                            <TextBlock Text="{Binding PlcIpAddress}"
+                                                                      FontSize="10"
+                                                                      Foreground="#B9BBBE"
+                                                                      Margin="0,3,0,0"/>
+                                                        </StackPanel>
+                                                    </Button>
+
+                                                    <!-- Connect button - only visible when this item is selected -->
+                                                    <Button Content="🔗"
+                                                            Command="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).ConnectCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            Background="#5865F2"
+                                                            Foreground="White"
+                                                            BorderThickness="0"
+                                                            Width="35"
+                                                            Height="35"
+                                                            FontSize="14"
+                                                            HorizontalAlignment="Right"
+                                                            VerticalAlignment="Center"
+                                                            Margin="0,0,8,0"
+                                                            ToolTip.Tip="Set IP for this PLC">
+                                                        <Button.IsVisible>
+                                                            <MultiBinding Converter="{StaticResource IsEqualConverter}">
+                                                                <Binding Path="."/>
+                                                                <Binding Path="$parent[Window].((vm:MainWindowViewModel)DataContext).SelectedConnection"/>
+                                                            </MultiBinding>
+                                                        </Button.IsVisible>
+                                                        <Button.Styles>
+                                                            <Style Selector="Button:pointerover">
+                                                                <Setter Property="Background" Value="#4752C4"/>
+                                                            </Style>
+                                                        </Button.Styles>
+                                                    </Button>
+                                                </Grid>
                                             </Border>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>

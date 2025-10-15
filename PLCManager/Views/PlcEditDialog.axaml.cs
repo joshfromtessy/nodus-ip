@@ -1,6 +1,8 @@
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using PLCManager.Models;
+using PLCManager.Services;
 using System.Linq;
 
 namespace PLCManager.Views;
@@ -8,47 +10,94 @@ namespace PLCManager.Views;
 public partial class PlcEditDialog : Window
 {
     public PlcConnection? Result { get; private set; }
-    private readonly string[] _availableAdapters;
+    private readonly NetworkService _networkService;
+    private PlcConnection? _existingConnection;
 
     public PlcEditDialog(string[] availableAdapters, PlcConnection? existingConnection = null)
     {
         InitializeComponent();
-        _availableAdapters = availableAdapters;
+        _networkService = new NetworkService();
+        _existingConnection = existingConnection;
 
         // Populate adapters
-        foreach (var adapter in availableAdapters)
+        PopulateAdapters(availableAdapters);
+
+        PopulateFields();
+    }
+
+    private void PopulateAdapters(string[] adapters)
+    {
+        var selectedAdapter = AdapterComboBox.SelectedItem?.ToString();
+
+        AdapterComboBox.Items.Clear();
+        foreach (var adapter in adapters)
         {
             AdapterComboBox.Items.Add(adapter);
         }
 
-        // If editing existing connection, populate fields
-        if (existingConnection != null)
+        // Try to restore selection
+        if (!string.IsNullOrEmpty(selectedAdapter))
         {
-            NameTextBox.Text = existingConnection.Name;
-            PlcIpTextBox.Text = existingConnection.PlcIpAddress;
-            MyIpTextBox.Text = existingConnection.MyIpAddress;
-            SubnetMaskTextBox.Text = existingConnection.SubnetMask;
-            GatewayTextBox.Text = existingConnection.Gateway;
-            NotesTextBox.Text = existingConnection.Notes;
+            AdapterComboBox.SelectedItem = selectedAdapter;
+        }
+        else if (_existingConnection != null)
+        {
+            AdapterComboBox.SelectedItem = _existingConnection.NetworkAdapter;
+        }
+        else if (adapters.Length > 0)
+        {
+            AdapterComboBox.SelectedIndex = 0;
+        }
+    }
+
+    private void PopulateFields()
+    {
+        // If editing existing connection, populate fields
+        if (_existingConnection != null)
+        {
+            NameTextBox.Text = _existingConnection.Name;
+            PlcIpTextBox.Text = _existingConnection.PlcIpAddress;
+            MyIpTextBox.Text = _existingConnection.MyIpAddress;
+            SubnetMaskTextBox.Text = _existingConnection.SubnetMask;
+            GatewayTextBox.Text = _existingConnection.Gateway;
+            NotesTextBox.Text = _existingConnection.Notes;
 
             // Select building
             var buildingItem = BuildingComboBox.Items.Cast<ComboBoxItem>()
-                .FirstOrDefault(item => item.Content?.ToString() == existingConnection.Building);
+                .FirstOrDefault(item => item.Content?.ToString() == _existingConnection.Building);
             if (buildingItem != null)
                 BuildingComboBox.SelectedItem = buildingItem;
 
-            // Select adapter
-            AdapterComboBox.SelectedItem = existingConnection.NetworkAdapter;
-
-            Title = "Edit PLC Connection";
+            TitleTextBlock.Text = "Edit Connection";
         }
         else
         {
             // Default values for new connection
             BuildingComboBox.SelectedIndex = 0; // West
-            if (availableAdapters.Length > 0)
-                AdapterComboBox.SelectedIndex = 0;
+            TitleTextBlock.Text = "Add Connection";
         }
+    }
+
+    private void OnRefreshAdapters(object? sender, RoutedEventArgs e)
+    {
+        var showInactive = ShowInactiveCheckBox.IsChecked ?? false;
+        var adapters = _networkService.GetNetworkAdapters(showInactive);
+        PopulateAdapters(adapters);
+    }
+
+    private void OnShowInactiveChanged(object? sender, RoutedEventArgs e)
+    {
+        OnRefreshAdapters(sender, e);
+    }
+
+    private void OnTitleBarPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        BeginMoveDrag(e);
+    }
+
+    private void OnMinimizeClick(object? sender, RoutedEventArgs e)
+    {
+        WindowState = WindowState.Minimized;
     }
 
     private bool IsValidIpAddress(string ip)

@@ -45,7 +45,8 @@ public partial class MainWindow : Window
             var viewModel = DataContext as MainWindowViewModel;
             if (viewModel != null && viewModel.SelectedConnection == connection)
             {
-                if (button.Parent is Border border)
+                // Find the parent Grid, then the Border
+                if (button.Parent is Grid grid && grid.Parent is Border border)
                 {
                     border.Background = new SolidColorBrush(Color.FromRgb(0x58, 0x65, 0xF2)); // #5865F2
                 }
@@ -86,6 +87,8 @@ public partial class MainWindow : Window
             DataContext = null;
             DataContext = temp;
 
+            // Auto-save after add
+            await viewModel.SaveConnectionsAsync();
             viewModel.StatusMessage = $"Added '{result.Name}' to {result.Building}";
         }
     }
@@ -118,6 +121,8 @@ public partial class MainWindow : Window
                 DataContext = null;
                 DataContext = temp;
 
+                // Auto-save after edit
+                await viewModel.SaveConnectionsAsync();
                 viewModel.StatusMessage = "Connection updated";
             }
         }
